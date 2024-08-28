@@ -1,0 +1,1 @@
+pub const TICKERS: &str = "https://api.bybit.com/v5/market/tickers?category=linear";
