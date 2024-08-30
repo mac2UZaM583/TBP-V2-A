@@ -1,5 +1,5 @@
 use std::error::Error;
-use crate::urls::TICKERS;
+use crate::urls::{INSTRUMENTS_INFO, TICKERS};
 use reqwest::{get as r_get, Error as Error__};
 use serde_json::Value;
 use ndarray::{Array1, Axis};
@@ -14,20 +14,14 @@ pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Er
         let mut prices: Vec<f64> = Vec::new();
         
         for item in data {
-            if let Some(symbol) = item.get("symbol").and_then(Value::as_str) {
-                if item["curPreListingPhase"] == "" && symbol.contains("USDT") && !symbol.contains("USDC") {
-                    symbols.push(symbol.to_string());
-                    if let Some(price_str) = item["lastPrice"].as_str() {
-                        if let Ok(price) = price_str.parse::<f64>() {
-                            prices.push(price);
-                        }
-                    }
-                }
+            let symbol = item["symbol"].as_str().unwrap();
+            if item["curPreListingPhase"] == "" && symbol.contains("USDT") && !symbol.contains("USDC") {
+                symbols.push(symbol.to_string());
+                prices.push(item["lastPrice"].as_str().unwrap().parse::<f64>().unwrap());
             }
         }
         Ok((Array1::from_vec(symbols), Array1::from_vec(prices)))
     }
-
     let response = g_response(TICKERS).await?;
     if let Some(tickers) = response
         .get("result")
@@ -66,4 +60,27 @@ pub async fn g_percent_changes(
         }
     }
     Err("data not found".into())
+}
+
+pub async fn g_round_qty(symbol: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    if let Ok(response) = g_response(&format!("{}{}", INSTRUMENTS_INFO, symbol)).await {
+        let instruments_info = &response["result"]["list"][0]["lotSizeFilter"];
+        let res: Vec<usize> = instruments_info
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter_map(|(k, v)| {
+                if k == "minOrderQty" || k == "qtyStep" {
+                    v.as_str().and_then(|v| v.find(".").map_or(
+                        Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len()))
+                    ))
+                } else {None}
+            })
+            .collect();
+        println!("{:#?}", instruments_info);
+        println!("{:#?}", res);
+
+    }
+    Err("instruments info not found".into())
+
 }
