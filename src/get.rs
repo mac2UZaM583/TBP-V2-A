@@ -72,7 +72,7 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<u8>, Box<dyn Error>> {
             .filter_map(|(k, v)| {
                 if k == "minOrderQty" || k == "qtyStep" {
                     v.as_str().and_then(|v| v.find(".").map_or(
-                        Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len()))
+                        Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len() - 1))
                     ))
                 } else {None}
             })
