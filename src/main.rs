@@ -31,6 +31,8 @@ async fn main() {
     //     }
     // }
 
-    // println!("{:#?}", g_("SETTINGS").unwrap()["TB_ID"]);
-    g_round_qty("SILLYUSDT").await;
+    let value_ = g_("SETTINGS").unwrap();
+    let value__ = &value_["THRESHOLD_PERCENT"].parse::<f32>().unwrap();
+    println!("{:#?}", value__);
+    // g_round_qty("ETHUSDT").await;
 }
