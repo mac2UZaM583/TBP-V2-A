@@ -44,7 +44,6 @@ async fn response(
             prmtrs.unwrap()
         ).as_bytes());
         
-        println!("{:#?}", prmtrs.unwrap());
         let mut headers = HeaderMap_::new();
         for (key, value) in [
             "X-BAPI-SIGN", 
@@ -61,7 +60,6 @@ async fn response(
         ]) {
             headers.insert(*key, HeaderValue::from_str(value)?);
         }
-        println!("{:#?}", &headers);
         let res_ = Client::new()
             .get(url)
             .headers(headers)
@@ -70,8 +68,7 @@ async fn response(
             .text()
             .await?
             .replace("\\\"", "\"")
-            .replace("\\", "")
-            ;
+            .replace("\\", "");
         let json_rasponse: Value = srd_from_str(&res_)?;
         return Ok(json_rasponse);
     }
