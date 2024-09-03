@@ -27,5 +27,3 @@ pub fn g_(path: &str) -> Result<HashMap<String, String>, io_Error> {
 
     Ok(fls_cntnt)
 }
-
-pub let fls_cntnt: HashMap<String, String> = g_("SETTINGS").unwrap();

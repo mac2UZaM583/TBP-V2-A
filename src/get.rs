@@ -1,11 +1,86 @@
-use std::error::Error;
-use crate::urls::{INSTRUMENTS_INFO, TICKERS};
-use reqwest::{get as r_get, Error as Error__};
-use serde_json::Value;
-use ndarray::{Array1, Axis};
+use crate::urls::*;
 
-async fn g_response(url: &str) -> Result<Value, Error__> {
-    Ok(r_get(url).await?.json().await?)
+use std::collections::HashMap;
+use std::error::Error;
+use reqwest::{
+    get as r_get, 
+    Client
+};
+use reqwest::header::{
+    HeaderMap as HeaderMap_,
+    HeaderValue, Values
+};
+use serde_json::{
+    Value, 
+    from_str as srd_from_str
+};
+use ndarray::{
+    Array1, 
+    Axis
+};
+use sha2::Sha256;
+use std::time::{
+    SystemTime, 
+    UNIX_EPOCH
+};
+use hmac::{Hmac, Mac};
+use hex; 
+
+async fn response(
+    url: &str, 
+    api: Option<&String>, 
+    api_secret: Option<&String>,
+    prmtrs: Option<&str>
+) -> Result<Value, Box<dyn Error>> {
+    if let (Some(api), Some(api_secret)) = (api, api_secret) {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)?
+            .as_millis() as u64;
+        let mut mac = Hmac::<Sha256>::new_from_slice(api_secret.as_bytes())?;
+        mac.update(format!(
+            "{}{}5000{}", 
+            &timestamp, 
+            api, 
+            prmtrs.unwrap()
+        ).as_bytes());
+        
+        println!("{:#?}", prmtrs.unwrap());
+        let mut headers = HeaderMap_::new();
+        for (key, value) in [
+            "X-BAPI-SIGN", 
+            "X-BAPI-API-KEY", 
+            "X-BAPI-TIMESTAMP", 
+            "X-BAPI-RECV-WINDOW",
+            "Content-type"
+        ].iter().zip(vec![
+            &hex::encode(mac.finalize().into_bytes()),
+            api,
+            &timestamp.to_string(),
+            "5000",
+            "application/json"
+        ]) {
+            headers.insert(*key, HeaderValue::from_str(value)?);
+        }
+        println!("{:#?}", &headers);
+        let res_ = Client::new()
+            .get(url)
+            .headers(headers)
+            .send()
+            .await?
+            .text()
+            .await?
+            .replace("\\\"", "\"")
+            .replace("\\", "")
+            ;
+        let json_rasponse: Value = srd_from_str(&res_)?;
+        return Ok(json_rasponse);
+    }
+    Ok(
+        r_get(url)
+        .await?
+        .json()
+        .await?
+    )
 }
 
 pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
@@ -22,7 +97,7 @@ pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Er
         }
         Ok((Array1::from_vec(symbols), Array1::from_vec(prices)))
     }
-    let response = g_response(TICKERS).await?;
+    let response = response(TICKERS, None, None, None).await?;
     if let Some(tickers) = response
         .get("result")
         .and_then(|v| v.get("list"))
@@ -62,8 +137,8 @@ pub async fn g_percent_changes(
     Err("data not found".into())
 }
 
-pub async fn g_round_qty(symbol: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-    if let Ok(response) = g_response(&format!("{}{}", INSTRUMENTS_INFO, symbol)).await {
+pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+    if let Ok(response) = response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await {
         let instruments_info = &response["result"]["list"][0]["lotSizeFilter"];
         let res: Vec<usize> = instruments_info
             .as_object()
@@ -77,10 +152,24 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<u8>, Box<dyn Error>> {
                 } else {None}
             })
             .collect();
-        println!("{:#?}", instruments_info);
-        println!("{:#?}", res);
-
+        return Ok(res);
     }
     Err("instruments info not found".into())
+}
 
+pub async fn g_balance(
+    mode: &String, 
+    account_type: &String, 
+    api: &String, 
+    api_secret: &String
+) -> Result<Value, Box<dyn Error>> {
+    let prmtrs = &format!("accountType={}&coin=USDT", account_type);
+    Ok(
+        response(
+            &format!("{}{}{}?{}", DOMEN, mode, WALLET_BALANCE, prmtrs), 
+            Some(api),
+            Some(api_secret),
+            Some(prmtrs)
+        ).await?
+    )
 }

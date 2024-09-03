@@ -1,14 +1,25 @@
 mod urls;
 mod get;
 mod settings_;
-use get::{g_last_prices, g_percent_changes, g_round_qty};
+use base64::encode;
+use get::*;
 use settings_::g_;
 
+use sha2::Sha256;
 use tokio; 
 use std::time::{
     Instant,
     Duration
 };
+
+use rsa::pkcs1::FromRsaPrivateKey;
+use rsa::pkcs8::FromPrivateKey;
+use rsa::{
+    RsaPrivateKey, 
+    PaddingScheme
+};
+use hmac::{Hmac, Mac};
+use hex; 
 
 #[tokio::main]
 async fn main() {
@@ -31,8 +42,12 @@ async fn main() {
     //     }
     // }
 
-    let value_ = g_("SETTINGS").unwrap();
-    let value__ = &value_["THRESHOLD_PERCENT"].parse::<f32>().unwrap();
-    println!("{:#?}", value__);
-    // g_round_qty("ETHUSDT").await;
+
+    let settings___ = g_("SETTINGS").unwrap();
+    println!("{:#?}", g_balance(
+        &settings___["MODE"],
+        &settings___["ACCOUNT_TYPE"], 
+        &settings___["API_EXCHANGE"], 
+        &settings___["API_2_EXCHANGE"]
+    ).await);
 }
