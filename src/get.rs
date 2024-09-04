@@ -129,23 +129,21 @@ pub async fn g_percent_changes(
 }
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
-    if let Ok(response) = response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await {
-        return Ok(
-            response["result"]["list"][0]["lotSizeFilter"]
-            .as_object()
-            .unwrap()
-            .iter()
-            .filter_map(|(k, v)| {
-                if k == "minOrderQty" || k == "qtyStep" {
-                    v.as_str().and_then(|v| v.find(".").map_or(
-                        Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len() - 1))
-                    ))
-                } else {None}
-            })
-            .collect()
-        );
-    }
-    Err("instruments info not found".into())
+    return Ok(
+        response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await?
+        ["result"]["list"][0]["lotSizeFilter"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .filter_map(|(k, v)| {
+            if k == "minOrderQty" || k == "qtyStep" {
+                v.as_str().and_then(|v| v.find(".").map_or(
+                    Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len() - 1))
+                ))
+            } else {None}
+        })
+        .collect()
+    );
 }
 
 pub async fn g_balance(
