@@ -81,25 +81,22 @@ async fn response(
 }
 
 pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
-    fn s_unpacking_data(data: &Vec<Value>) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
-        let mut symbols: Vec<String> = Vec::new();
-        let mut prices: Vec<f64> = Vec::new();
-        for item in data {
-            let symbol = item["symbol"].to_string();
-            if item["curPreListingPhase"] == "" && symbol.contains("USDT") && !symbol.contains("USDC") {
-                symbols.push(symbol);
-                prices.push(item["lastPrice"].as_str().unwrap().parse::<f64>()?);
-            }
-        }
-        Ok((Array1::from_vec(symbols), Array1::from_vec(prices)))
-    }
-    return s_unpacking_data(
+    let mut symbols: Vec<String> = Vec::new();
+    let mut prices: Vec<f64> = Vec::new();
+    for item in {
         response(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None).await?
             .as_object()
             .unwrap()["result"]["list"]
             .as_array()
             .unwrap()
-    );
+    } {
+        let symbol = item["symbol"].to_string();
+        if item["curPreListingPhase"] == "" && symbol.contains("USDT") && !symbol.contains("USDC") {
+            symbols.push(symbol);
+            prices.push(item["lastPrice"].as_str().unwrap().parse::<f64>()?);
+        }
+    }
+    Ok((Array1::from_vec(symbols), Array1::from_vec(prices)))
 }
 
 pub async fn g_percent_changes(
