@@ -8,7 +8,7 @@ use reqwest::{
 };
 use reqwest::header::{
     HeaderMap as HeaderMap_,
-    HeaderValue, Values
+    HeaderValue
 };
 use serde_json::{
     Value, 
@@ -80,39 +80,36 @@ async fn response(
     )
 }
 
-pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
+pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
     fn s_unpacking_data(data: &Vec<Value>) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
         let mut symbols: Vec<String> = Vec::new();
         let mut prices: Vec<f64> = Vec::new();
-        
         for item in data {
-            let symbol = item["symbol"].as_str().unwrap();
+            let symbol = item["symbol"].to_string();
             if item["curPreListingPhase"] == "" && symbol.contains("USDT") && !symbol.contains("USDC") {
-                symbols.push(symbol.to_string());
-                prices.push(item["lastPrice"].as_str().unwrap().parse::<f64>().unwrap());
+                symbols.push(symbol);
+                prices.push(item["lastPrice"].as_str().unwrap().parse::<f64>()?);
             }
         }
         Ok((Array1::from_vec(symbols), Array1::from_vec(prices)))
     }
-    let response = response(TICKERS, None, None, None).await?;
-    if let Some(tickers) = response
-        .get("result")
-        .and_then(|v| v.get("list"))
-        .and_then(Value::as_array) {
-        return s_unpacking_data(tickers);
-    }
-    Err("tickers not found".into())
+    return s_unpacking_data(
+        response(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None).await?
+            .as_object()
+            .unwrap()["result"]["list"]
+            .as_array()
+            .unwrap()
+    );
 }
 
 pub async fn g_percent_changes(
+    mode: &String,
     symbols_old: &Array1<String>, 
-    prices_old: &Array1<f64>
+    prices_old: &Array1<f64>,
+    threshold_percent: f64,
+    limit_percent: f64
 ) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
-    if let Ok((symbols_new, prices_new)) = g_last_prices().await {
-        let threshold_percent: f64 = 0.005; // <-
-        let limit_percent: f64 = 0.1; // <-
-        
-        //SET
+    if let Ok((symbols_new, prices_new)) = g_last_prices(mode).await {
         let changes = &prices_new / prices_old - 1.0;
         let indices: Vec<usize> = changes
             .iter()
@@ -136,8 +133,8 @@ pub async fn g_percent_changes(
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     if let Ok(response) = response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await {
-        let instruments_info = &response["result"]["list"][0]["lotSizeFilter"];
-        let res: Vec<usize> = instruments_info
+        return Ok(
+            response["result"]["list"][0]["lotSizeFilter"]
             .as_object()
             .unwrap()
             .iter()
@@ -148,8 +145,8 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
                     ))
                 } else {None}
             })
-            .collect();
-        return Ok(res);
+            .collect()
+        );
     }
     Err("instruments info not found".into())
 }
@@ -159,7 +156,7 @@ pub async fn g_balance(
     account_type: &String, 
     api: &String, 
     api_secret: &String
-) -> Result<Value, Box<dyn Error>> {
+) -> Result<f64, Box<dyn Error>> {
     let prmtrs = &format!("accountType={}&coin=USDT", account_type);
     Ok(
         response(
@@ -167,6 +164,13 @@ pub async fn g_balance(
             Some(api),
             Some(api_secret),
             Some(prmtrs)
-        ).await?
+        )
+        .await?
+        .as_object()
+        .unwrap()
+        ["result"]["list"][0]["coin"][0]["walletBalance"]
+        .as_str()
+        .unwrap()
+        .parse::<f64>()?
     )
 }

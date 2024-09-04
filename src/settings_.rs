@@ -7,7 +7,8 @@ use std::io::{
 };
 
 pub fn g_(path: &str) -> Result<HashMap<String, String>, io_Error> {
-    let fls_cntnt: HashMap<_, _> = fs::read_dir(path)?
+    return Ok(
+        fs::read_dir(path)?
         .filter_map(|entry| {
             let entry = entry.ok()?; // result -> option
             let filename = entry.file_name();
@@ -23,7 +24,6 @@ pub fn g_(path: &str) -> Result<HashMap<String, String>, io_Error> {
                 None
             }
         })
-        .collect();
-
-    Ok(fls_cntnt)
+        .collect()
+    )
 }
