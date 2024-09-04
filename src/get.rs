@@ -129,7 +129,7 @@ pub async fn g_percent_changes(
 }
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
-    return Ok(
+    Ok(
         response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await?
         ["result"]["list"][0]["lotSizeFilter"]
         .as_object()
@@ -143,7 +143,7 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
             } else {None}
         })
         .collect()
-    );
+    )
 }
 
 pub async fn g_balance(
