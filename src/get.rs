@@ -106,43 +106,43 @@ pub async fn g_percent_changes(
     threshold_percent: f64,
     limit_percent: f64
 ) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
-    if let Ok((symbols_new, prices_new)) = g_last_prices(mode).await {
-        let changes = &prices_new / prices_old - 1.0;
-        let indices: Vec<usize> = changes
-            .iter()
-            .enumerate()
-            .filter(|(_, &change)| {
-                let change = change.abs();
-                change >= threshold_percent && change < limit_percent
-            })
-            .map(|(index, _)| index)
-            .collect();
-        let symbols_f = symbols_new.select(Axis(0), &indices);
-        if symbols_old.select(Axis(0), &indices) == symbols_f {
-            return Ok((
-                symbols_f,
-                changes.select(Axis(0), &indices)
-            ));
-        }
+    let (symbols_new, prices_new) = g_last_prices(mode).await?;
+    let changes = &prices_new / prices_old - 1.0;
+    let indices: Vec<usize> = changes
+        .iter()
+        .enumerate()
+        .filter(|(_, &change)| {
+            let change = change.abs();
+            change >= threshold_percent && change < limit_percent
+        })
+        .map(|(index, _)| index)
+        .collect();
+    let symbols_f = symbols_new.select(Axis(0), &indices);
+    if symbols_old.select(Axis(0), &indices) == symbols_f {
+        return Ok((
+            symbols_f,
+            changes.select(Axis(0), &indices)
+        ));
     }
     Err("data not found".into())
 }
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(
-        response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None).await?
-        ["result"]["list"][0]["lotSizeFilter"]
-        .as_object()
-        .unwrap()
-        .iter()
-        .filter_map(|(k, v)| {
-            if k == "minOrderQty" || k == "qtyStep" {
-                v.as_str().and_then(|v| v.find(".").map_or(
-                    Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len() - 1))
-                ))
-            } else {None}
-        })
-        .collect()
+        response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None)
+            .await?
+            ["result"]["list"][0]["lotSizeFilter"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter_map(|(k, v)| {
+                if k == "minOrderQty" || k == "qtyStep" {
+                    v.as_str().and_then(|v| v.find(".").map_or(
+                        Some(0), |index| v.get(index..).and_then(|v_| Some(v_.len() - 1))
+                    ))
+                } else {None}
+            })
+            .collect()
     )
 }
 
@@ -160,12 +160,12 @@ pub async fn g_balance(
             Some(api_secret),
             Some(prmtrs)
         )
-        .await?
-        .as_object()
-        .unwrap()
-        ["result"]["list"][0]["coin"][0]["walletBalance"]
-        .as_str()
-        .unwrap()
-        .parse::<f64>()?
+            .await?
+            .as_object()
+            .unwrap()
+            ["result"]["list"][0]["coin"][0]["walletBalance"]
+            .as_str()
+            .unwrap()
+            .parse::<f64>()?
     )
 }
