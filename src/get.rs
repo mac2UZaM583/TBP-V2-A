@@ -114,7 +114,7 @@ pub async fn g_percent_changes(
             changes.select(Axis(0), &indices)
         ));
     }
-    Err("data not found".into())
+    Err("g_percent_changes data not found".into())
 }
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
