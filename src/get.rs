@@ -69,11 +69,11 @@ async fn request_(
     )
 }
 
-pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
+pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
     let mut symbols: Vec<String> = Vec::new();
     let mut prices: Vec<f64> = Vec::new();
     for item in {
-        request_(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None)
+        request_(&format!("{}{}", DOMEN, TICKERS), None, None, None)
             .await?
             .as_object()
             .unwrap()
@@ -91,13 +91,12 @@ pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>
 }
 
 pub async fn g_percent_changes(
-    mode: &String,
     symbols_old: &Array1<String>, 
     prices_old: &Array1<f64>,
     threshold_percent: f64,
     limit_percent: f64
 ) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
-    let (symbols_new, prices_new) = g_last_prices(mode).await?;
+    let (symbols_new, prices_new) = g_last_prices().await?;
     let changes = &prices_new / prices_old - 1.0;
     let indices: Vec<usize> = changes
         .iter()
