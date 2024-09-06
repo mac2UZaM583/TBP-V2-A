@@ -10,7 +10,7 @@ use reqwest::header::{HeaderMap as HeaderMap_, HeaderValue};
 use hmac::{Hmac, Mac};
 use hex; 
 
-async fn response(
+async fn request_(
     url: &str, 
     api: Option<&String>, 
     api_secret: Option<&String>,
@@ -49,11 +49,11 @@ async fn response(
             .headers(headers)
             .send()
             .await
-            .expect(&format!("{} response err", &url));
+            .expect(&format!("{} request_ err", &url));
         let json_rasponse: Value = srd_from_str(&res_
             .text()
             .await
-            .expect(&format!("{} json response err", &url))
+            .expect(&format!("{} json request_ err", &url))
             .replace("\\\"", "\"")
             .replace("\\", "")
         )?;
@@ -62,10 +62,10 @@ async fn response(
     Ok(
         r_get(url)
         .await
-        .expect(&format!("{} response err", &url))
+        .expect(&format!("{} request_ err", &url))
         .json()
         .await
-        .expect(&format!("{} json response err", &url))
+        .expect(&format!("{} json request_ err", &url))
     )
 }
 
@@ -73,7 +73,7 @@ pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>
     let mut symbols: Vec<String> = Vec::new();
     let mut prices: Vec<f64> = Vec::new();
     for item in {
-        response(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None)
+        request_(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None)
             .await?
             .as_object()
             .unwrap()
@@ -120,7 +120,7 @@ pub async fn g_percent_changes(
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(
-        response(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None)
+        request_(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None)
             .await?
             ["result"]["list"][0]["lotSizeFilter"]
             .as_object()
@@ -145,7 +145,7 @@ pub async fn g_balance(
 ) -> Result<f64, Box<dyn Error>> {
     let prmtrs = &format!("accountType={}&coin=USDT", account_type);
     Ok(
-        response(
+        request_(
             &format!("{}{}{}?{}", DOMEN, mode, WALLET_BALANCE, prmtrs), 
             Some(api),
             Some(api_secret),
