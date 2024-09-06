@@ -61,11 +61,11 @@ async fn request_(
     }
     Ok(
         r_get(url)
-        .await
-        .expect(&format!("{} request_ err", &url))
-        .json()
-        .await
-        .expect(&format!("{} json request_ err", &url))
+            .await
+            .expect(&format!("{} request_ err", &url))
+            .json()
+            .await
+            .expect(&format!("{} json request_ err", &url))
     )
 }
 
