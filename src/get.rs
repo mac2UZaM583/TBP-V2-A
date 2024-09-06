@@ -1,28 +1,12 @@
 use crate::urls::*;
 
-use std::collections::HashMap;
+use ndarray::{Array1, Axis};
 use std::error::Error;
-use reqwest::{
-    get as r_get, 
-    Client
-};
-use reqwest::header::{
-    HeaderMap as HeaderMap_,
-    HeaderValue
-};
-use serde_json::{
-    Value, 
-    from_str as srd_from_str
-};
-use ndarray::{
-    Array1, 
-    Axis
-};
+use serde_json::{Value, from_str as srd_from_str};
+use reqwest::{get as r_get, Client};
 use sha2::Sha256;
-use std::time::{
-    SystemTime, 
-    UNIX_EPOCH
-};
+use std::time::{SystemTime, UNIX_EPOCH};
+use reqwest::header::{HeaderMap as HeaderMap_, HeaderValue};
 use hmac::{Hmac, Mac};
 use hex; 
 
