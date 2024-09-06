@@ -64,19 +64,24 @@ async fn response(
             .get(url)
             .headers(headers)
             .send()
-            .await?
+            .await
+            .expect(&format!("{} response err", &url));
+        let json_rasponse: Value = srd_from_str(&res_
             .text()
-            .await?
+            .await
+            .expect(&format!("{} json response err", &url))
             .replace("\\\"", "\"")
-            .replace("\\", "");
-        let json_rasponse: Value = srd_from_str(&res_)?;
+            .replace("\\", "")
+        )?;
         return Ok(json_rasponse);
     }
     Ok(
         r_get(url)
-        .await?
+        .await
+        .expect(&format!("{} response err", &url))
         .json()
-        .await?
+        .await
+        .expect(&format!("{} json response err", &url))
     )
 }
 
@@ -84,9 +89,11 @@ pub async fn g_last_prices(mode: &String) -> Result<(Array1<String>, Array1<f64>
     let mut symbols: Vec<String> = Vec::new();
     let mut prices: Vec<f64> = Vec::new();
     for item in {
-        response(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None).await?
+        response(&format!("{}{}{}", DOMEN, mode, TICKERS), None, None, None)
+            .await?
             .as_object()
-            .unwrap()["result"]["list"]
+            .unwrap()
+            ["result"]["list"]
             .as_array()
             .unwrap()
     } {
