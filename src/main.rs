@@ -4,16 +4,13 @@ mod set_;
 mod settings_;
 use get_::*;
 use set_::*;
-use settings_::g_;
+use settings_::*;
 
 use tokio; 
 use std::time::{Instant, Duration};
 
 #[tokio::main]
 async fn main() {
-    let settings_ = g_("SETTINGS").unwrap();
-    let threshold_percent = &settings_["THRESHOLD_PERCENT"].parse::<f64>().unwrap();
-    let limit_percent = &settings_["LIMIT_PERCENT"].parse::<f64>().unwrap();
     let mut smbls_prcs_old = g_last_prices().await.unwrap_or_default(); 
     let mut start_changes = Instant::now();
 
@@ -23,8 +20,8 @@ async fn main() {
         }   
         let (symbol, last_price) = g_percent_changes(
             &smbls_prcs_old,
-            *threshold_percent,
-            *limit_percent
+            SETTINGS.THRESHOLD_PERCENT,
+            SETTINGS.LIMIT_PERCENT
         ).await.unwrap_or_default();
         
         // START
@@ -32,10 +29,10 @@ async fn main() {
             println!("{}", (&symbol));
             let (balance, round_qty) = tokio::join!(
                 g_balance(
-                    &settings_["MODE"], 
-                    &settings_["ACCOUNT_TYPE"], 
-                    &settings_["API_EXCHANGE"], 
-                    &settings_["API_2_EXCHANGE"]
+                    &SETTINGS.MODE, 
+                    &SETTINGS.ACCOUNT_TYPE,
+                    &SETTINGS.API_EXCHANGE,
+                    &SETTINGS.API_2_EXCHANGE
                 ),
                 g_round_qty(&symbol)
             );
