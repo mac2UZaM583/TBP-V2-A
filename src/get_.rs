@@ -44,7 +44,7 @@ pub async fn g_percent_changes(
     let symbols_f = symbols_new.select(Axis(0), &indices);
     if symbols_old.select(Axis(0), &indices) == symbols_f {
         return Ok((
-            symbols_f[0].clone(),
+            symbols_f[0].clone().replace("\"", ""),
             prices_new.select(Axis(0), &indices)[0]
         ));
     }
@@ -53,7 +53,7 @@ pub async fn g_percent_changes(
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(
-        request_(&format!("{}{}", INSTRUMENTS_INFO, symbol), None, None, None)
+        request_(&format!("{}{}{}", DOMEN, INSTRUMENTS_INFO, symbol), None, None, None)
             .await?
             ["result"]["list"][0]["lotSizeFilter"]
             .as_object()

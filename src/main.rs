@@ -26,7 +26,7 @@ async fn main() {
         
         // START
         if !symbol.is_empty() {
-            println!("{}", (&symbol));
+            println!("{:#?}", (&symbol));
             let (balance, round_qty) = tokio::join!(
                 g_balance(
                     &SETTINGS.MODE, 
@@ -37,7 +37,7 @@ async fn main() {
                 g_round_qty(&symbol)
             );
             
-            
+            println!("{:#?}", (balance, round_qty, last_price));
             s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
         }
     }
