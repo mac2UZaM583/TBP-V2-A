@@ -91,12 +91,12 @@ pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Er
 }
 
 pub async fn g_percent_changes(
-    symbols_old: &Array1<String>, 
-    prices_old: &Array1<f64>,
+    smbls_prcs_old: &(Array1<String>, Array1<f64>),
     threshold_percent: f64,
     limit_percent: f64
 ) -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
     let (symbols_new, prices_new) = g_last_prices().await?;
+    let (symbols_old, prices_old) = smbls_prcs_old;
     let changes = &prices_new / prices_old - 1.0;
     let indices: Vec<usize> = changes
         .iter()

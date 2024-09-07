@@ -4,11 +4,9 @@ use ndarray::Array1;
 use std::time::Instant;
 
 pub async fn s_point_data_update(
-    symbols_old: &mut Array1<String>, 
-    prices_old: &mut Array1<f64>,
+    smbls_prcs_old: &mut (Array1<String>, Array1<f64>),
     start_changes: &mut Instant
 ) {
-    let res = g_last_prices().await.unwrap_or_default();
-    (*symbols_old, *prices_old) = res;
+    *smbls_prcs_old = g_last_prices().await.unwrap_or_default();
     *start_changes = Instant::now();
 }
