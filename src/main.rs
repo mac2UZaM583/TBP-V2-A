@@ -19,7 +19,7 @@ async fn main() {
 
     loop {
         if start_changes.elapsed() >= Duration::new(60, 0) {
-            s_point_data_update(&mut smbls_prcs_old,&mut start_changes).await;
+            s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
         }   
         let (symbols, percent_change) = g_percent_changes(
             &smbls_prcs_old,
