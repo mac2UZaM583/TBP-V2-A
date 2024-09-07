@@ -10,7 +10,7 @@ pub fn g_(path: &str) -> Result<HashMap<String, String>, io_Error> {
     return Ok(
         fs::read_dir(path)?
         .filter_map(|entry| {
-            let entry = entry.ok()?; // result -> option
+            let entry = entry.ok()?;
             let filename = entry.file_name();
             if filename.to_string_lossy().ends_with(".txt") {
                 let mut file = File::open(entry.path()).ok()?;

@@ -8,6 +8,7 @@ pub async fn s_point_data_update(
     prices_old: &mut Array1<f64>,
     start_changes: &mut Instant
 ) {
-    (*symbols_old, *prices_old) = g_last_prices().await.expect("s_point_data_update err");
+    let res = g_last_prices().await.unwrap_or_default();
+    (*symbols_old, *prices_old) = res;
     *start_changes = Instant::now();
 }

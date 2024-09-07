@@ -14,7 +14,7 @@ async fn main() {
     let settings_ = g_("SETTINGS").unwrap();
     let threshold_percent = &settings_["THRESHOLD_PERCENT"].parse::<f64>().unwrap();
     let limit_percent = &settings_["LIMIT_PERCENT"].parse::<f64>().unwrap();
-    let Ok((mut symbols_old, mut prices_old)) = g_last_prices().await else {todo!();};
+    let (mut symbols_old, mut prices_old) = g_last_prices().await.unwrap_or_default();
     let mut start_changes = Instant::now();
 
     loop {
@@ -25,12 +25,14 @@ async fn main() {
                 &mut start_changes
             ).await;
         }   
-        let Ok((symbols, percent_change)) = g_percent_changes(
+        let (symbols, percent_change) = g_percent_changes(
             &symbols_old, 
             &prices_old,
             *threshold_percent,
             *limit_percent
-        ).await else {todo!()};
+        ).await.unwrap_or_default();
+        
+        // START
         if !(symbols.is_empty() && percent_change.is_empty()) {
             println!("{:#?}", (symbols, percent_change));
             s_point_data_update(
