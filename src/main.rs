@@ -1,9 +1,9 @@
-mod urls;
-mod get;
-mod set;
+mod session_;
+mod get_;
+mod set_;
 mod settings_;
-use get::*;
-use set::*;
+use get_::*;
+use set_::*;
 use settings_::g_;
 
 use tokio; 
@@ -21,17 +21,27 @@ async fn main() {
         if start_changes.elapsed() >= Duration::new(60, 0) {
             s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
         }   
-        let (symbols, percent_change) = g_percent_changes(
+        let (symbol, last_price) = g_percent_changes(
             &smbls_prcs_old,
             *threshold_percent,
             *limit_percent
         ).await.unwrap_or_default();
         
         // START
-        if !(symbols.is_empty() && percent_change.is_empty()) {
-            println!("{:#?}", (symbols, percent_change));
-            s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
+        if !symbol.is_empty() {
+            println!("{}", (&symbol));
+            let (balance, round_qty) = tokio::join!(
+                g_balance(
+                    &settings_["MODE"], 
+                    &settings_["ACCOUNT_TYPE"], 
+                    &settings_["API_EXCHANGE"], 
+                    &settings_["API_2_EXCHANGE"]
+                ),
+                g_round_qty(&symbol)
+            );
             
+            
+            s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
         }
     }
 }
