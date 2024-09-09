@@ -2,8 +2,7 @@ use crate::get_::g_last_prices;
 use crate::session_::*;
 
 use ndarray::Array1;
-use serde_json::{json, Value};
-use std::collections::HashMap;
+use serde_json::json;
 use std::time::Instant;
 
 pub async fn s_point_data_update(
@@ -15,8 +14,7 @@ pub async fn s_point_data_update(
 }
 
 pub async fn s_place_order(
-    api: &String,
-    api_secret: &String,
+    args: (&String, &String),
     mode: &String,
     symbol: &str, 
     order_type: &str,
@@ -24,6 +22,7 @@ pub async fn s_place_order(
     side: &str,
     qty: &str 
 ) {
+    let (api, api_secret) = args;
     let prmtrs = json!({
         "category": "linear",
         "symbol": symbol,
@@ -34,9 +33,7 @@ pub async fn s_place_order(
     }).to_string();
     let response = request_(
         &format!("{}{}{}{}", DOMEN, mode, PLACE_ORDER, &prmtrs), 
-        Some(api),
-        Some(api_secret), 
-        Some(&prmtrs),
+        Some((api, api_secret, &prmtrs)),
         true,
     ).await;
     println!("{:#?}", response);

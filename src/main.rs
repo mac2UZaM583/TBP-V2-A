@@ -41,10 +41,10 @@ async fn main() {
     //         s_point_data_update(&mut smbls_prcs_old, &mut start_changes).await;
     //     }
     // }
+    let args = (&SETTINGS.API_EXCHANGE, &SETTINGS.API_2_EXCHANGE,);
     println!("{:#?}", g_round_qty("ETHUSDT").await);
     s_place_order(
-        &SETTINGS.API_EXCHANGE,
-        &SETTINGS.API_2_EXCHANGE,
+        args,
         &SETTINGS.MODE,
         "ETHUSDT",
         "Limit",

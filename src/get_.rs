@@ -3,7 +3,6 @@ use crate::session_::*;
 use ndarray::{Array1, Axis};
 use std::error::Error;
 
-
 pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Error>> {
     let mut symbols: Vec<String> = Vec::new();
     let mut prices: Vec<f64> = Vec::new();
@@ -11,9 +10,7 @@ pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Er
         request_(
             &format!("{}{}", DOMEN, TICKERS), 
             None, 
-            None, 
-            None, 
-            false
+            false,
         )
             .await?
             .as_object()
@@ -63,8 +60,6 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
         request_(
             &format!("{}{}{}", DOMEN, INSTRUMENTS_INFO, symbol), 
             None, 
-            None,
-            None,
             false,
         )
             .await?
@@ -84,18 +79,16 @@ pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
 }
 
 pub async fn g_balance(
-    mode: &String, 
+    args: (&String, &String),
     account_type: &String, 
-    api: &String, 
-    api_secret: &String
+    mode: &String, 
 ) -> Result<f64, Box<dyn Error>> {
+    let (api, api_secret) = args;
     let prmtrs = &format!("accountType={}&coin=USDT", account_type);
     Ok(
         request_(
             &format!("{}{}{}{}", DOMEN, mode, WALLET_BALANCE, prmtrs), 
-            Some(api),
-            Some(api_secret),
-            Some(prmtrs),
+            Some((api, api_secret, prmtrs,)),
             false,
         )
             .await?

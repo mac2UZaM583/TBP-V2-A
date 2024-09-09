@@ -19,10 +19,8 @@ pub const PLACE_ORDER: &str = ".bybit.com/v5/order/create?";
 
 pub async fn request_(
     url: &str, 
-    api: Option<&String>, 
-    api_secret: Option<&String>,
-    prmtrs: Option<&str>,
-    set: bool
+    args: Option<(&String, &String, &str)>,
+    set: bool,
 ) -> Result<Value, Box<dyn Error>> {
     fn g_hmac(
         args: &(&String, &String,),
@@ -62,18 +60,18 @@ pub async fn request_(
         }
         return headers;
     }
-    if let (Some(api), Some(api_secret), Some(prmtrs)) = (api, api_secret, prmtrs) {
+    if let Some((api, api_secret, prmtrs)) = args {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)?
             .as_millis()
             .to_string();
-        let args = (api, &timestamp);
+        let args_ = (api, &timestamp);
         let hmac = g_hmac(
-            &args,
+            &args_,
             api_secret, 
             prmtrs,
         );
-        let headers = g_headers(&args,&hmac,);
+        let headers = g_headers(&args_,&hmac,);
         let client = Client::new();
         let request_build; 
         if set {
