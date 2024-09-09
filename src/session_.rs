@@ -82,17 +82,13 @@ pub async fn request_(
         let request_build; 
         if set {
             let prmtrs_json: Value = srd_from_str(prmtrs)?;
-            request_build = client
-                .post(url)
-                .headers(headers)
-                .json(&prmtrs_json);
+            request_build = client.post(url).json(&prmtrs_json);
         } else {
-            request_build = client
-                .get(url)
-                .headers(headers);
+            request_build = client.get(url)
         }
 
         let res_ = request_build
+            .headers(headers)
             .send()
             .await
             .expect(&format!("{} request_ err", &url));
