@@ -43,7 +43,7 @@ pub async fn request_(
         sign: &str,
         api: &str,
         timestamp: &str
-    ) -> Result<HeaderMap_, Box<dyn Error>> {
+    ) -> HeaderMap_ {
         let mut headers = HeaderMap_::new();
         for (key, value) in [
             "X-BAPI-SIGN", 
@@ -58,9 +58,9 @@ pub async fn request_(
             "5000",
             "application/json"
         ]) {
-            headers.insert(*key, HeaderValue::from_str(value)?);
+            headers.insert(*key, HeaderValue::from_str(value).unwrap());
         }
-        return Ok(headers);
+        return headers;
     }
     if let (Some(api), Some(api_secret), Some(prmtrs)) = (api, api_secret, prmtrs) {
         let timestamp = SystemTime::now()
@@ -77,7 +77,7 @@ pub async fn request_(
             &hmac, 
             api, 
             &timestamp
-        )?;
+        );
         let client = Client::new();
         let request_build; 
         if set {
