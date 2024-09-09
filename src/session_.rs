@@ -25,11 +25,11 @@ pub async fn request_(
     set: bool
 ) -> Result<Value, Box<dyn Error>> {
     fn g_hmac(
-        api: &str,
+        args: &(&String, &String,),
         api_secret: &str,
-        timestamp: &str,
         prmtrs: &str
     ) -> String {
+        let (api, timestamp) = args;
         let mut mac = Hmac::<Sha256>::new_from_slice(api_secret.as_bytes()).unwrap();
         mac.update(format!(
             "{}{}5000{}", 
@@ -40,10 +40,10 @@ pub async fn request_(
         return hex::encode(mac.finalize().into_bytes());
     }
     fn g_headers(
+        args: &(&String, &String,),
         sign: &str,
-        api: &str,
-        timestamp: &str
     ) -> HeaderMap_ {
+        let (api, timestamp) = args;
         let mut headers = HeaderMap_::new();
         for (key, value) in [
             "X-BAPI-SIGN", 
@@ -67,17 +67,13 @@ pub async fn request_(
             .duration_since(UNIX_EPOCH)?
             .as_millis()
             .to_string();
+        let args = (api, &timestamp);
         let hmac = g_hmac(
-            api, 
+            &args,
             api_secret, 
-            &timestamp, 
-            prmtrs
+            prmtrs,
         );
-        let headers = g_headers(
-            &hmac, 
-            api, 
-            &timestamp
-        );
+        let headers = g_headers(&args,&hmac,);
         let client = Client::new();
         let request_build; 
         if set {
