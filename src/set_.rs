@@ -36,8 +36,8 @@ pub async fn s_place_order(
         &format!("{}{}{}{}", DOMEN, mode, PLACE_ORDER, &prmtrs), 
         Some(api),
         Some(api_secret), 
+        Some(&prmtrs),
         true,
-        Some(&prmtrs)
     ).await;
     println!("{:#?}", response);
 }

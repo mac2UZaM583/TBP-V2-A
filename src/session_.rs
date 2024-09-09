@@ -21,21 +21,29 @@ pub async fn request_(
     url: &str, 
     api: Option<&String>, 
     api_secret: Option<&String>,
-    set: bool,
-    prmtrs: Option<&str>
+    prmtrs: Option<&str>,
+    set: bool
 ) -> Result<Value, Box<dyn Error>> {
-    if let (Some(api), Some(api_secret)) = (api, api_secret) {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)?
-            .as_millis() as u64;
-        let mut mac = Hmac::<Sha256>::new_from_slice(api_secret.as_bytes())?;
+    fn g_hmac(
+        api: &str,
+        api_secret: &str,
+        timestamp: &str,
+        prmtrs: &str
+    ) -> String {
+        let mut mac = Hmac::<Sha256>::new_from_slice(api_secret.as_bytes()).unwrap();
         mac.update(format!(
             "{}{}5000{}", 
             &timestamp, 
             api, 
-            prmtrs.unwrap()
+            prmtrs
         ).as_bytes());
-        
+        return hex::encode(mac.finalize().into_bytes());
+    }
+    fn g_headers(
+        sign: &str,
+        api: &str,
+        timestamp: &str
+    ) -> Result<HeaderMap_, Box<dyn Error>> {
         let mut headers = HeaderMap_::new();
         for (key, value) in [
             "X-BAPI-SIGN", 
@@ -44,18 +52,36 @@ pub async fn request_(
             "X-BAPI-RECV-WINDOW",
             "Content-type"
         ].iter().zip(vec![
-            &hex::encode(mac.finalize().into_bytes()),
+            sign,
             api,
-            &timestamp.to_string(),
+            timestamp,
             "5000",
             "application/json"
         ]) {
             headers.insert(*key, HeaderValue::from_str(value)?);
         }
+        return Ok(headers);
+    }
+    if let (Some(api), Some(api_secret), Some(prmtrs)) = (api, api_secret, prmtrs) {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)?
+            .as_millis()
+            .to_string();
+        let hmac = g_hmac(
+            api, 
+            api_secret, 
+            &timestamp, 
+            prmtrs
+        );
+        let headers = g_headers(
+            &hmac, 
+            api, 
+            &timestamp
+        )?;
         let client = Client::new();
         let request_build; 
         if set {
-            let prmtrs_json: Value = srd_from_str(prmtrs.unwrap())?;
+            let prmtrs_json: Value = srd_from_str(prmtrs)?;
             request_build = client
                 .post(url)
                 .headers(headers)
@@ -65,6 +91,7 @@ pub async fn request_(
                 .get(url)
                 .headers(headers);
         }
+
         let res_ = request_build
             .send()
             .await
