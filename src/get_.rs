@@ -7,7 +7,7 @@ pub async fn g_last_prices() -> Result<(Array1<String>, Array1<f64>), Box<dyn Er
     let mut symbols: Vec<String> = Vec::new();
     let mut prices: Vec<f64> = Vec::new();
     for item in {
-        request_(&format!("{}{}", DOMEN, TICKERS), None, None, None)
+        request_(&format!("{}{}", DOMEN, TICKERS), None, None, false, None)
             .await?
             .as_object()
             .unwrap()
@@ -53,7 +53,7 @@ pub async fn g_percent_changes(
 
 pub async fn g_round_qty(symbol: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(
-        request_(&format!("{}{}{}", DOMEN, INSTRUMENTS_INFO, symbol), None, None, None)
+        request_(&format!("{}{}{}", DOMEN, INSTRUMENTS_INFO, symbol), None, None, false, None)
             .await?
             ["result"]["list"][0]["lotSizeFilter"]
             .as_object()
@@ -79,9 +79,10 @@ pub async fn g_balance(
     let prmtrs = &format!("accountType={}&coin=USDT", account_type);
     Ok(
         request_(
-            &format!("{}{}{}?{}", DOMEN, mode, WALLET_BALANCE, prmtrs), 
+            &format!("{}{}{}{}", DOMEN, mode, WALLET_BALANCE, prmtrs), 
             Some(api),
             Some(api_secret),
+            false,
             Some(prmtrs)
         )
             .await?

@@ -1,5 +1,5 @@
 use std::error::Error;
-use serde_json::{Value, from_str as srd_from_str};
+use serde_json::{from_str as srd_from_str, json, Value};
 use reqwest::{get as r_get, Client};
 use sha2::Sha256;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -12,15 +12,16 @@ pub const DOMEN: &str = "https://api";
 // GET
 pub const TICKERS: &str = ".bybit.com/v5/market/tickers?category=linear";
 pub const INSTRUMENTS_INFO: &str = ".bybit.com/v5/market/instruments-info?category=linear&symbol=";
-pub const WALLET_BALANCE: &str = ".bybit.com/v5/account/wallet-balance";
+pub const WALLET_BALANCE: &str = ".bybit.com/v5/account/wallet-balance?";
 
 // SET
-pub const PLACE_ORDER: &str = ".bybit.com/v5/order/create";
+pub const PLACE_ORDER: &str = ".bybit.com/v5/order/create?";
 
 pub async fn request_(
     url: &str, 
     api: Option<&String>, 
     api_secret: Option<&String>,
+    set: bool,
     prmtrs: Option<&str>
 ) -> Result<Value, Box<dyn Error>> {
     if let (Some(api), Some(api_secret)) = (api, api_secret) {
@@ -51,9 +52,20 @@ pub async fn request_(
         ]) {
             headers.insert(*key, HeaderValue::from_str(value)?);
         }
-        let res_ = Client::new()
-            .get(url)
-            .headers(headers)
+        let client = Client::new();
+        let request_build; 
+        if set {
+            let prmtrs_json: Value = srd_from_str(prmtrs.unwrap())?;
+            request_build = client
+                .post(url)
+                .headers(headers)
+                .json(&prmtrs_json);
+        } else {
+            request_build = client
+                .get(url)
+                .headers(headers);
+        }
+        let res_ = request_build
             .send()
             .await
             .expect(&format!("{} request_ err", &url));
@@ -75,3 +87,7 @@ pub async fn request_(
             .expect(&format!("{} json request_ err", &url))
     )
 }
+
+
+// добавить возврат только возврат реквеста и создать функцию обработки реквеста
+// добавить "?" в ссылки где требуются параметры
