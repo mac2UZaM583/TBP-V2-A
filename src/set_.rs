@@ -14,7 +14,7 @@ pub async fn s_point_data_update(
 }
 
 pub async fn s_place_order(
-    args: (&String, &String),
+    args: &(&String, &String),
     mode: &String,
     symbol: &str, 
     order_type: &str,

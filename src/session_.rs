@@ -2,10 +2,11 @@ use std::error::Error;
 use serde_json::{from_str as srd_from_str, json, Value};
 use reqwest::{get as r_get, Client};
 use sha2::Sha256;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use reqwest::header::{HeaderMap as HeaderMap_, HeaderValue};
 use hmac::{Hmac, Mac};
 use hex; 
+use tokio::time::timeout;
 
 pub const DOMEN: &str = "https://api";
 
@@ -13,6 +14,7 @@ pub const DOMEN: &str = "https://api";
 pub const TICKERS: &str = ".bybit.com/v5/market/tickers?category=linear";
 pub const INSTRUMENTS_INFO: &str = ".bybit.com/v5/market/instruments-info?category=linear&symbol=";
 pub const WALLET_BALANCE: &str = ".bybit.com/v5/account/wallet-balance?";
+pub const KLINES: &str = ".bybit.com/v5/market/kline?";
 
 // SET
 pub const PLACE_ORDER: &str = ".bybit.com/v5/order/create?";
@@ -81,10 +83,11 @@ pub async fn request_(
             request_build = client.get(url)
         }
 
-        let res_ = request_build
+        let res_ = timeout(Duration::from_secs(5), request_build
             .headers(headers)
             .send()
-            .await
+        )
+            .await?
             .expect(&format!("{} request_ err", &url));
         let json_rasponse: Value = srd_from_str(&res_
             .text()
